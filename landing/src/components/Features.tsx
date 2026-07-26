@@ -799,7 +799,7 @@ const FEATURES = [
   {
     title: 'Unlimited Generation Length',
     description:
-      'Generate up to 50,000 characters in one go. Text is auto-split at sentence boundaries, generated per-chunk, and crossfaded seamlessly.',
+      'Generate up to 500,000 characters in one go — book-chapter scale. Text is auto-split at sentence boundaries, generated per-chunk, and crossfaded seamlessly.',
     icon: TextCursorInput,
     animation: UnlimitedLengthAnimation,
   },

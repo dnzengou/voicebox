@@ -155,7 +155,7 @@ Text is automatically split at sentence boundaries and each chunk is generated i
 
 - Configurable auto-chunking limit (100–5,000 chars)
 - Crossfade slider (0–200ms) for smooth transitions
-- Max text length: 50,000 characters
+- Max text length: 500,000 characters (auto-chunked and queued)
 - Smart splitting respects abbreviations, CJK punctuation, and `[tags]`
 
 ### Generation Versions

@@ -80,7 +80,10 @@ class GenerationRequest(BaseModel):
     """Request model for voice generation."""
 
     profile_id: str
-    text: str = Field(..., min_length=1, max_length=50000)
+    # Auto-chunking + serial queue handle arbitrarily long input. The cap
+    # here exists only to reject pathological single-request payloads;
+    # 500 000 chars is comfortably book-chapter-scale (~5–6 h of audio).
+    text: str = Field(..., min_length=1, max_length=500000)
     language: str = Field(default="en", pattern="^(zh|en|ja|ko|de|fr|ru|pt|es|it|he|ar|da|el|fi|hi|ms|nl|no|pl|sv|sw|tr)$")
     seed: Optional[int] = Field(None, ge=0)
     model_size: Optional[str] = Field(default="1.7B", pattern="^(1\\.7B|0\\.6B|1B|3B)$")
@@ -370,7 +373,7 @@ class SpeakRequest(BaseModel):
 class LLMGenerateRequest(BaseModel):
     """Request model for LLM text generation."""
 
-    prompt: str = Field(..., min_length=1, max_length=50000)
+    prompt: str = Field(..., min_length=1, max_length=500000)
     system: Optional[str] = Field(None, max_length=4000)
     model_size: Optional[str] = Field(default="0.6B", pattern="^(0\\.6B|1\\.7B|4B)$")
     max_tokens: int = Field(default=512, ge=1, le=4096)
