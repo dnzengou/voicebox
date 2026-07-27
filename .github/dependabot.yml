@@ -1,0 +1,105 @@
+version: 2
+updates:
+  # Root workspace (biome, tsc, tailwind)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      biome:
+        patterns: ["@biomejs/*"]
+      typescript:
+        patterns: ["typescript", "@types/*"]
+      tailwind:
+        patterns: ["tailwindcss", "@tailwindcss/*"]
+
+  - package-ecosystem: "npm"
+    directory: "/app"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      react:
+        patterns: ["react", "react-*", "@react-*"]
+      i18n:
+        patterns: ["i18next", "i18next-*", "react-i18next"]
+      wavesurfer:
+        patterns: ["wavesurfer.js", "@wavesurfer/*"]
+    ignore:
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: "npm"
+    directory: "/tauri"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    groups:
+      tauri:
+        patterns: ["@tauri-apps/*"]
+
+  - package-ecosystem: "npm"
+    directory: "/web"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+
+  - package-ecosystem: "npm"
+    directory: "/landing"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    groups:
+      next:
+        patterns: ["next", "@next/*"]
+    ignore:
+      - dependency-name: "next"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: "npm"
+    directory: "/docs"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    groups:
+      fumadocs:
+        patterns: ["fumadocs-*"]
+
+  # Python backend
+  - package-ecosystem: "pip"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      transformers-stack:
+        patterns: ["transformers", "tokenizers", "safetensors", "accelerate", "huggingface-hub"]
+      audio-stack:
+        patterns: ["soundfile", "librosa", "scipy", "numpy"]
+    ignore:
+      # Chatterbox stack pins are load-bearing (see requirements.txt comment)
+      - dependency-name: "torch"
+        update-types: ["version-update:semver-major"]
+
+  # Rust (Tauri shell)
+  - package-ecosystem: "cargo"
+    directory: "/tauri/src-tauri"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      tauri-rust:
+        patterns: ["tauri", "tauri-*"]
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      actions:
+        patterns: ["*"]
