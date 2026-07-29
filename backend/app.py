@@ -166,12 +166,27 @@ def create_app() -> FastAPI:
 
     _configure_cors(application)
     application.add_middleware(ClientIdMiddleware)
+    _configure_host_validation(application)
     register_routers(application)
     application.mount("/mcp", mcp_app)
     logger.info("MCP: mounted at /mcp")
     _mount_frontend(application)
 
     return application
+
+
+def _configure_host_validation(application: FastAPI) -> None:
+    """Attach DNS-rebinding defense.
+
+    Starlette runs the *last-added* middleware outermost, so registering
+    HostHeaderMiddleware after CORS+ClientId puts it in front on the
+    request path — a rejected request never reaches the ClientId stamp
+    logic or the mounted MCP app, keeping the check as cheap as possible
+    and avoiding side effects on rejected traffic.
+    """
+    from .utils.host_validation import HostHeaderMiddleware
+
+    application.add_middleware(HostHeaderMiddleware)
 
 
 def _configure_cors(application: FastAPI) -> None:
