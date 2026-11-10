@@ -23,13 +23,12 @@ set ``VOICEBOX_DISABLE_HOST_CHECK=1``.
 
 import logging
 import os
-from typing import Iterable
+from collections.abc import Iterable
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 from starlette.types import ASGIApp
-
 
 logger = logging.getLogger(__name__)
 
@@ -92,9 +91,7 @@ def _matches(host: str, port: str | None, allowed: set[tuple[str, str | None]]) 
     """
     if (host, None) in allowed:
         return True
-    if (host, port) in allowed:
-        return True
-    return False
+    return (host, port) in allowed
 
 
 def get_allowed_hosts(env_value: str | None = None) -> set[tuple[str, str | None]]:

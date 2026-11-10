@@ -8,8 +8,9 @@ Usage:
     python -m pytest backend/tests/test_host_validation.py -v
 """
 
-import pytest
 from unittest.mock import patch
+
+import pytest
 from fastapi import FastAPI
 from starlette.testclient import TestClient
 
@@ -31,7 +32,7 @@ def _build_app() -> FastAPI:
     return app
 
 
-@pytest.fixture()
+@pytest.fixture
 def client():
     # TestClient defaults ``Host: testserver`` — override per-call instead.
     return TestClient(_build_app())
@@ -82,15 +83,10 @@ class TestHostValidationDefaults:
 
     def test_missing_host_header_rejected(self):
         """A request with no Host header is malformed for HTTP/1.1 — reject."""
-        # TestClient always sets Host, so drive the middleware directly with
-        # a manually constructed empty header set via a stripping wrapper.
-        from fastapi.testclient import TestClient as FTC
-
         app = _build_app()
-
         # Empty string reaches middleware after Starlette normalizes it.
-        client = FTC(app)
-        response = client.get("/health", headers={"Host": ""})
+        inner_client = TestClient(app)
+        response = inner_client.get("/health", headers={"Host": ""})
         assert response.status_code == 421
 
 

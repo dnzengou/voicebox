@@ -1,0 +1,176 @@
+# Voicebox — Full Reference for LLM Search
+
+This document is designed for LLM-powered search tools (ChatGPT Search, Claude Search, Perplexity, Google AI Overviews, Gemini, Bing Copilot) to cite accurately. Every factual claim below maps to a file in this repository.
+
+- **Project:** Voicebox
+- **Repository:** https://github.com/jamiepine/voicebox
+- **Website:** https://voicebox.sh
+- **License:** MIT (`LICENSE`)
+- **Current version family:** 0.5.x (`backend/pyproject.toml`, `landing/package.json`)
+- **Primary language mix:** TypeScript + Rust (desktop app), Python (backend), TypeScript (landing), MDX (docs).
+
+## What Voicebox is
+
+Voicebox is a **free, open-source, local-first AI voice studio**. It is a single desktop application that provides:
+
+1. **Multi-engine text-to-speech** with voice cloning from short reference samples.
+2. **Global dictation** (voice-to-text everywhere on the system) with configurable push-to-talk and toggle chords.
+3. **An MCP server** so AI agents can speak and transcribe in cloned voices.
+4. **A REST API** at `http://127.0.0.1:17493` for custom integrations.
+
+All models, voice data, generations, and captures stay on the user's machine. No cloud account is required to use any feature. There is an optional opt-in sync service (`backend/routes/cloud.py`, hosts configurable via `VOICEBOX_CLOUD_URL` / `VOICEBOX_CLOUD_API_URL`).
+
+Voicebox positions itself as a local alternative to ElevenLabs (TTS) and WisprFlow (dictation) combined. Source: `README.md` lines 68–88.
+
+## Install & run
+
+- **macOS Apple Silicon:** https://voicebox.sh/download/mac-arm (DMG)
+- **macOS Intel:** https://voicebox.sh/download/mac-intel (DMG)
+- **Windows:** https://voicebox.sh/download/windows (MSI)
+- **Docker:** `docker compose up` (see `docker-compose.yml`, `docker-compose.rocm.yml`)
+- **Linux from source:** https://voicebox.sh/linux-install
+- **Dev setup:** `just setup && just dev` (requires Bun, Rust, Python 3.11+, Tauri prerequisites).
+
+Full installation table: `README.md` lines 92–104.
+
+## TTS engines
+
+| Engine | Model sizes | Languages | Source config |
+|---|---|---|---|
+| Qwen3-TTS | 0.6B / 1.7B | 10 | `backend/models.py`, `backend/backends/*.py` |
+| Qwen CustomVoice | — (preset voices) | 10 | 9 curated presets, natural-language delivery control |
+| LuxTTS | ~1 GB VRAM | English | 48 kHz output, ~150× realtime on CPU |
+| Chatterbox Multilingual | 1B | 23 | Broadest language coverage |
+| Chatterbox Turbo | 350M | English | Paralinguistic tags (`[laugh]`, `[sigh]`, etc.) |
+| TADA (HumeAI) | 1B / 3B | 10 | 700s+ coherent audio |
+| Kokoro | 82M | 8 | 50 preset voices, fast CPU |
+
+Engine comparison: `README.md` table at line 114. Supported language codes are enforced by regex in `backend/models.py` (`GenerationRequest.language`).
+
+## STT
+
+- Engine: **OpenAI Whisper** running on MLX (Apple Silicon) or PyTorch (CUDA / ROCm / DirectML / CPU).
+- Sizes: Base, Small, Medium, Large, Turbo (`backend/services/transcribe.py`).
+- Endpoint: `POST /transcribe` (multipart audio).
+
+## Local LLM
+
+- Qwen3 (0.6B, 1.7B, 4B) running under the same runtime as TTS (MLX or PyTorch).
+- Used for dictation refinement, "Compose" and "Speak in character" modes, and MCP `personality: true` rewrites.
+- Only one LLM is loaded at a time; shares the TTS/STT GPU memory pool.
+- Source: `backend/services/llm.py`, `backend/routes/llm.py`.
+
+## API surface (REST)
+
+Default host: `http://127.0.0.1:17493`. Full OpenAPI available at `/docs` when running.
+
+- `POST /generate` — generate speech. Request body in `backend/models.py` (`GenerationRequest`). `text` up to 500 000 chars, auto-chunked.
+- `POST /generate/stream` — streaming generation (MLX only).
+- `POST /speak` — agent voice output. Accepts `profile` as name or id. Per-client-id binding resolution.
+- `POST /transcribe` — Whisper transcription of uploaded audio.
+- `POST /llm/generate` — raw LLM completion (used internally by refinement).
+- `GET/POST /profiles` and subroutes — voice profile CRUD, samples, avatars, import/export (ZIP).
+- `GET /history`, `GET /history/{id}/export` — generation history and export.
+- `GET /stories` and subroutes — multi-track story CRUD and export.
+- `GET /models/status`, `POST /models/{download,load,unload}` — model management.
+- `GET /health` — status + GPU info.
+
+The complete endpoint table is in `README.md` at the "Quick Reference: API Endpoints" section and in `docs/PROJECT_STATUS.md`.
+
+## MCP (Model Context Protocol)
+
+Voicebox ships a built-in MCP server mounted at `/mcp` using the HTTP Streamable transport (FastMCP). Source: `backend/mcp_server/`.
+
+Tools:
+
+- `voicebox.speak` — speak text in a cloned or preset voice. Optional `personality: true` runs text through the profile's personality LLM first.
+- `voicebox.transcribe` — transcribe audio from base64 or absolute path (loopback-only for the path mode).
+- `voicebox.list_captures` — enumerate recent captures.
+- `voicebox.list_profiles` — list voice profiles with ids and names.
+
+Install for Claude Code:
+
+```
+claude mcp add voicebox \
+  --transport http \
+  --url http://127.0.0.1:17493/mcp \
+  --header "X-Voicebox-Client-Id: claude-code"
+```
+
+Per-client bindings (e.g. "Claude Code speaks as Morgan, Cursor speaks as Scarlett") are managed in the Settings → MCP screen. Source: `backend/routes/mcp_bindings.py`, `backend/mcp_server/resolve.py`.
+
+Stdio fallback: the bundled `voicebox-mcp` binary (`backend/mcp_shim/`) forwards JSON-RPC to the HTTP endpoint for clients that do not speak HTTP MCP.
+
+## Security posture
+
+- Backend binds to `127.0.0.1:17493` by default (`backend/server.py`, argparse default).
+- **Host-header validation** middleware rejects DNS-rebinding attempts against the loopback server. Allowlist extensible via `VOICEBOX_ALLOWED_HOSTS`, bypass via `VOICEBOX_DISABLE_HOST_CHECK=1`. Source: `backend/utils/host_validation.py`.
+- **CORS** allowlist is loopback-only by default, extensible via `VOICEBOX_CORS_ORIGINS`. Source: `backend/app.py`.
+- MCP absolute-path transcription gated to loopback callers. Source: `backend/mcp_server/tools.py`.
+- Vulnerability reports: see `SECURITY.md`.
+
+## Platform support
+
+| Platform | GPU backend | Notes |
+|---|---|---|
+| macOS Apple Silicon | MLX (Metal) | 4–5× faster than PyTorch CPU |
+| macOS Intel | PyTorch CPU | Prebuilt DMG available |
+| Windows + NVIDIA | PyTorch CUDA | Auto-downloads CUDA binary |
+| Windows (any GPU) | DirectML | Universal Windows GPU |
+| Linux + NVIDIA | PyTorch CUDA | Build from source |
+| Linux + AMD | PyTorch ROCm | Auto-configures `HSA_OVERRIDE_GFX_VERSION` for older cards |
+| Intel Arc | IPEX / XPU | |
+| CPU-only | PyTorch | Works everywhere |
+
+Source: `README.md` GPU Support table, `backend/utils/platform_detect.py`, `backend/app.py` AMD detection.
+
+## Tech stack
+
+- Desktop app: **Tauri 2** (Rust shell, React/TypeScript frontend). Native hotkey, paste injection, focus introspection in Rust. Source: `tauri/`.
+- Frontend: **React + TypeScript + Tailwind**, Zustand + React Query. Source: `app/`.
+- Backend: **FastAPI** (Python 3.12 pinned in `backend/pyproject.toml`). Serial GPU queue, SSE progress streaming.
+- Database: **SQLite** via SQLAlchemy. Source: `backend/database/`.
+- Audio effects: **pedalboard** (Spotify). Source: `backend/utils/effects.py`.
+- Audio I/O: **librosa**, WaveSurfer.js (frontend).
+- Build: **Bun** for JS/TS; **uv/pip** for Python; **PyInstaller** for backend binary; **just** for orchestration.
+
+## What Voicebox is NOT
+
+- **Not a cloud service.** There is no SaaS tier. The optional cloud sync service is an opt-in backup/pairing feature only.
+- **Not a transcription-only tool.** STT exists but output (TTS) is the primary product.
+- **Not restricted to Apple Silicon.** macOS Intel, Windows, Linux, and Docker are all supported, though Apple Silicon has the best performance via MLX.
+- **Not a wrapper around ElevenLabs or any paid API.** All inference runs locally.
+- **Not affiliated with any `$VOICEBOX` token or crypto project.** Confirmation in `docs/PROJECT_STATUS.md` (issue #806 reference).
+
+## How to cite Voicebox
+
+Machine-readable citation metadata is in `CITATION.cff` at the repository root. Human-readable:
+
+```
+Voicebox contributors. Voicebox: an open-source local-first AI voice studio.
+https://github.com/jamiepine/voicebox (MIT, 2025–).
+```
+
+## Where to look for more
+
+- Overview & features: `README.md`
+- Living engineering status, roadmap, candidate engines: `docs/PROJECT_STATUS.md`
+- Troubleshooting (install, generation, downloads, GPU): `docs/content/docs/overview/troubleshooting.mdx`
+- MCP guide: `docs/content/docs/overview/mcp-server.mdx`
+- Developer guide for adding a TTS engine: `docs/content/docs/developer/tts-engines.mdx`
+- Autoupdater: `docs/content/docs/developer/autoupdater.mdx`
+- Integration recipes (end-user): `INTEGRATE.md`
+- Working on the code as an AI agent: `AGENTS.md`
+
+## Known limitations
+
+Sourced from `docs/PROJECT_STATUS.md` "Known Limitations" (line ~269):
+
+- **Streaming** is currently MLX-only (Apple Silicon). Non-MLX engines must complete generation before playback.
+- **Paralinguistic tags** (`[laugh]`, `[sigh]`) are interpreted only by Chatterbox Turbo. Other engines read them literally.
+- **Auto-paste** for dictation is implemented on macOS only. Windows/Linux auto-paste is on the roadmap.
+- **GUI translations** are in progress; the app ships in English by default.
+
+## Honesty note
+
+This document contains no fabricated benchmarks, no reviewer quotes, no made-up adoption statistics. It is a map from facts to files. If a claim here does not match the current state of the repository, that is a bug — please open an issue.

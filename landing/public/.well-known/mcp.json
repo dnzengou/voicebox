@@ -1,0 +1,38 @@
+{
+  "$schema": "https://modelcontextprotocol.io/schemas/well-known/mcp.schema.json",
+  "comment": "Voicebox runs a local Model Context Protocol server on the user's own machine. This file lives at voicebox.sh/.well-known/mcp.json so AI agents and installer tools can discover how to attach to that local server. The endpoint itself is NOT at voicebox.sh — it's on the user's localhost at http://127.0.0.1:17493/mcp after the desktop app is running.",
+  "servers": [
+    {
+      "name": "voicebox",
+      "description": "Voicebox local voice server — speak text in cloned voices, transcribe audio, and browse captures/profiles.",
+      "transport": "http",
+      "url": "http://127.0.0.1:17493/mcp",
+      "headers": {
+        "X-Voicebox-Client-Id": "<your-client-id>"
+      },
+      "install": {
+        "requires": "Voicebox desktop app running locally",
+        "download": "https://voicebox.sh/download",
+        "docs": "https://github.com/jamiepine/voicebox/blob/main/INTEGRATE.md#3-agent-wire-claude-code--cursor--cline-into-a-cloned-voice"
+      },
+      "tools": [
+        { "name": "voicebox.speak", "description": "Speak text aloud in a cloned or preset voice. Optional personality rewrite." },
+        { "name": "voicebox.transcribe", "description": "Transcribe audio (base64 or absolute path) using Whisper." },
+        { "name": "voicebox.list_captures", "description": "List recent audio captures with their transcripts." },
+        { "name": "voicebox.list_profiles", "description": "List voice profiles available for synthesis." }
+      ],
+      "security": {
+        "default_binding": "loopback-only (127.0.0.1)",
+        "host_header_validation": true,
+        "notes": "Server rejects requests whose Host header is not in the local allowlist. See VOICEBOX_ALLOWED_HOSTS."
+      }
+    }
+  ],
+  "project": {
+    "name": "Voicebox",
+    "repository": "https://github.com/jamiepine/voicebox",
+    "license": "MIT",
+    "llms_txt": "https://voicebox.sh/llms.txt",
+    "integrate_md": "https://github.com/jamiepine/voicebox/blob/main/INTEGRATE.md"
+  }
+}

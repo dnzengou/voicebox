@@ -1,0 +1,41 @@
+# This file is machine-readable citation metadata.
+# https://citation-file-format.github.io/
+cff-version: 1.2.0
+message: "If you use Voicebox in academic work or build on it, please cite it using these metadata."
+title: "Voicebox: an open-source, local-first AI voice studio"
+abstract: >-
+  Voicebox is a free and open-source desktop application combining multi-engine
+  voice cloning, text-to-speech, system-wide dictation, and agent voice output
+  via the Model Context Protocol. All inference runs locally on the user's
+  machine (MLX on Apple Silicon; PyTorch on CUDA, ROCm, DirectML, Intel XPU, or
+  CPU elsewhere). Ships seven TTS engines (Qwen3-TTS, Qwen CustomVoice, LuxTTS,
+  Chatterbox Multilingual, Chatterbox Turbo, HumeAI TADA, Kokoro) plus OpenAI
+  Whisper for transcription and a bundled Qwen3 LLM for refinement and personas.
+type: software
+license: MIT
+repository-code: "https://github.com/jamiepine/voicebox"
+url: "https://voicebox.sh"
+keywords:
+  - voice cloning
+  - text-to-speech
+  - TTS
+  - speech-to-text
+  - STT
+  - whisper
+  - MLX
+  - local-first
+  - privacy
+  - Model Context Protocol
+  - MCP
+  - Tauri
+  - FastAPI
+  - open source
+authors:
+  - family-names: Pine
+    given-names: Jamie
+    email: ijamespine@me.com
+  - name: "The Voicebox contributors"
+    website: "https://github.com/jamiepine/voicebox/graphs/contributors"
+# Update `version` and `date-released` on each tagged release.
+version: "0.5.0"
+date-released: 2026-04-25

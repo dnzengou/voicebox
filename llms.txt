@@ -1,0 +1,52 @@
+# Voicebox
+
+> Voicebox is a local-first, open-source AI voice studio for macOS, Windows, Linux, and Docker. It combines voice cloning, multi-engine text-to-speech, global dictation, and agent-voice output in one app — the two cloud incumbents (ElevenLabs for TTS, WisprFlow for dictation) rolled into a single tool that runs on the user's own hardware. License: MIT. Repository: https://github.com/jamiepine/voicebox.
+
+Voicebox ships seven TTS engines (Qwen3-TTS, Qwen CustomVoice, LuxTTS, Chatterbox Multilingual, Chatterbox Turbo, HumeAI TADA, Kokoro), a Whisper-based STT pipeline, a bundled Qwen3 LLM for refinement and personas, and a built-in Model Context Protocol (MCP) server so any MCP-aware agent (Claude Code, Cursor, Cline, Windsurf, VS Code MCP) can speak, transcribe, and read captures. The desktop app is built with Tauri (Rust shell, React/TypeScript frontend); the backend is FastAPI (Python). All models, voice data, and captures stay on the user's machine.
+
+## Overview
+
+- [README](https://github.com/jamiepine/voicebox/blob/main/README.md): Feature list, installation table, API examples, tech stack, roadmap.
+- [CONTRIBUTING](https://github.com/jamiepine/voicebox/blob/main/CONTRIBUTING.md): Prerequisites (Bun, Rust, Python 3.11+, Tauri, Xcode on macOS), `just setup`, `just dev`.
+- [CHANGELOG](https://github.com/jamiepine/voicebox/blob/main/CHANGELOG.md): Per-release change history.
+- [LICENSE](https://github.com/jamiepine/voicebox/blob/main/LICENSE): MIT.
+- [SECURITY](https://github.com/jamiepine/voicebox/blob/main/SECURITY.md): Vulnerability disclosure policy.
+- [RESPONSIBLE_USE](https://github.com/jamiepine/voicebox/blob/main/RESPONSIBLE_USE.md): Guidelines on voice-cloning consent.
+- [CREDIBILITY](https://github.com/jamiepine/voicebox/blob/main/CREDIBILITY.md): Verifiable claims mapped to source files.
+- [INTEGRATE](https://github.com/jamiepine/voicebox/blob/main/INTEGRATE.md): End-user integration recipes (shell, Discord, Slack, Home Assistant, CI, podcast, audiobook).
+- [AGENTS](https://github.com/jamiepine/voicebox/blob/main/AGENTS.md): Instructions for AI coding agents working on this repo.
+
+## Core features
+
+- **Voice cloning** from a few seconds of reference audio, plus curated preset voices (Kokoro ships 50+, Qwen CustomVoice ships 9).
+- **7 TTS engines**, switchable per-generation, covering 23 languages via Chatterbox Multilingual.
+- **Global dictation** with push-to-talk and tap-to-toggle chords; accessibility-verified auto-paste on macOS; in-app mic on every text field.
+- **Agent voice output** via one MCP tool call (`voicebox.speak`) or `POST /speak`. Any MCP client or shell script can speak in a cloned voice.
+- **Post-processing effects** via Spotify's `pedalboard`: pitch shift, reverb, delay, chorus, compressor, gain, high/low-pass. 4 built-in presets.
+- **Auto-chunking** at sentence boundaries with configurable crossfade. Max input: 500 000 characters.
+- **Captures** tab: every dictation, in-app recording, and uploaded audio file is stored with transcript and can be replayed, re-transcribed, refined, or promoted to a voice sample.
+- **Stories editor**: multi-track timeline for conversations, podcasts, narratives.
+- **Voice personalities**: free-form persona attached to a profile, driven by a bundled Qwen3 LLM running locally.
+
+## APIs
+
+- [REST API endpoints](https://github.com/jamiepine/voicebox/blob/main/README.md#api): `/generate`, `/speak`, `/transcribe`, `/profiles`, `/history`, `/stories`, `/models/*`, `/health`, OpenAPI at `/docs`.
+- [MCP server](https://github.com/jamiepine/voicebox/blob/main/docs/content/docs/overview/mcp-server.mdx): Built-in Model Context Protocol server at `/mcp` (HTTP Streamable). Tools: `voicebox.speak`, `voicebox.transcribe`, `voicebox.list_captures`, `voicebox.list_profiles`. Stdio shim available (`voicebox-mcp` binary).
+- Default local URL: `http://127.0.0.1:17493`.
+
+## Supported platforms
+
+| Platform | Backend | Shipping |
+|---|---|---|
+| macOS Apple Silicon | MLX (Metal) | Prebuilt DMG |
+| macOS Intel | PyTorch CPU | Prebuilt DMG |
+| Windows (NVIDIA) | PyTorch CUDA | Prebuilt MSI |
+| Windows (any GPU) | DirectML | Prebuilt MSI |
+| Linux (NVIDIA / AMD / Intel Arc) | PyTorch CUDA / ROCm / XPU | Build from source |
+| Docker | CPU / CUDA / ROCm | `docker compose up` |
+
+## Optional
+
+- [Developer: TTS engine integration guide](https://github.com/jamiepine/voicebox/blob/main/docs/content/docs/developer/tts-engines.mdx): How to add a new engine; optimized for AI coding agents.
+- [Developer: autoupdater](https://github.com/jamiepine/voicebox/blob/main/docs/content/docs/developer/autoupdater.mdx)
+- [PROJECT_STATUS](https://github.com/jamiepine/voicebox/blob/main/docs/PROJECT_STATUS.md): Living engineering status — what's shipped, what's in-flight, candidate engines, prioritized work queue.
